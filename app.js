@@ -1,59 +1,42 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 
-function App() {
-    const [input, setInput] = useState('');
-    const [response, setResponse] = useState(null);
-    const [error, setError] = useState(null);
-    const [selectedOptions, setSelectedOptions] = useState([]);
+const app = express();
+app.use(bodyParser.json());
+app.use(cors());
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const parsedInput = JSON.parse(input);
-            const res = await axios.post('bajaj-finserv-test-5pn3vvcf3-zaidkhan078s-projects.vercel.app/bfhl', parsedInput);
-            setResponse(res.data);
-            setError(null);
-        } catch (err) {
-            setError('Invalid JSON input or server error');
-            setResponse(null);
-        }
-    };
+const port = process.env.PORT || 3000;
 
-    const handleSelect = (e) => {
-        const { options } = e.target;
-        const selected = Array.from(options).filter(option => option.selected).map(option => option.value);
-        setSelectedOptions(selected);
-    };
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+app.post('/bfhl', (req, res) => {
+    const { data } = req.body;
+    const user_id = 'Zaid_20/06/2002';
+    const email = 'zaidkhanmbad@gmail.com'; 
+    const roll_number = 'RA2111026030195'; 
 
-    return (
-        <div className="App">
-            <h1>{'Your Roll Number'}</h1>
-            <form onSubmit={handleSubmit}>
-                <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder='Enter JSON'
-                />
-                <button type="submit">Submit</button>
-            </form>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            {response && (
-                <div>
-                    <select multiple={true} onChange={handleSelect}>
-                        <option value="alphabets">Alphabets</option>
-                        <option value="numbers">Numbers</option>
-                        <option value="highest_alphabet">Highest Alphabet</option>
-                    </select>
-                    <div>
-                        {selectedOptions.includes('alphabets') && <p>Alphabets: {response.alphabets.join(', ')}</p>}
-                        {selectedOptions.includes('numbers') && <p>Numbers: {response.numbers.join(', ')}</p>}
-                        {selectedOptions.includes('highest_alphabet') && <p>Highest Alphabet: {response.highest_alphabet.join(', ')}</p>}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
+    if (!Array.isArray(data)) {
+        return res.status(400).json({ is_success: false, message: 'Invalid input' });
+    }
 
-export default App;
+    const numbers = data.filter(item => !isNaN(item));
+    const alphabets = data.filter(item => isNaN(item) && typeof item === 'string');
+
+    const highest_alphabet = alphabets.length ? [alphabets.sort((a, b) => b.localeCompare(a))[0]] : [];
+
+    return res.json({
+        is_success: true,
+        user_id,
+        email,
+        roll_number,
+        numbers,
+        alphabets,
+        highest_alphabet
+    });
+});
+
+app.get('/bfhl', (req, res) => {
+    return res.status(200).json({ operation_code: 1 });
+});
